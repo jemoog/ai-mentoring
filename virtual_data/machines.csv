@@ -1,0 +1,6 @@
+﻿machine_id,machine_name,available_products,capacity_per_hour,operation_power_kW,idle_power_kW,available_start_time,available_end_time
+M01,CNC Cutter 1,"A,B",80,72,12,06:00,22:00
+M02,Assembly Cell 1,"A,B,C",60,55,10,06:00,22:00
+M03,Heat Treatment Furnace,"B,C",40,145,28,00:00,23:59
+M04,Press Machine,"A,C",50,125,24,06:00,22:00
+M05,Inspection & Packing,"A,B,C",100,32,6,08:00,20:00

@@ -1,0 +1,31 @@
+{
+  "planning_period": {
+    "start": "2026-09-21 00:00:00",
+    "end": "2026-09-28 00:00:00",
+    "slot_minutes": 15
+  },
+  "row_counts": {
+    "job_orders": 80,
+    "machines": 5,
+    "product_routing": 9,
+    "maintenance_schedule": 5,
+    "tou_tariff": 672
+  },
+  "products": [
+    "A",
+    "B",
+    "C"
+  ],
+  "load_type_mapping": {
+    "Light": "20~50kW 저에너지/보조 공정",
+    "Medium": "50~100kW 일반 생산 공정",
+    "Maximum": "100~180kW 고에너지 핵심 공정"
+  },
+  "quality_checks": {
+    "due_after_release": true,
+    "all_job_products_in_routing": true,
+    "positive_times_energy_setup": true,
+    "every_process_has_machine": true,
+    "maintenance_for_all_machines": true
+  }
+}

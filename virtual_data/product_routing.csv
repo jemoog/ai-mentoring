@@ -1,0 +1,10 @@
+﻿product_type,process_step,process_id,eligible_machine_id,process_time_min,setup_time_min,load_type,estimated_energy_kWh
+A,1,A-CUT,M01,45,20,Medium,54.0
+A,2,A-PRS,M04,55,30,Maximum,114.58
+A,3,A-INS,M05,25,10,Light,13.33
+B,1,B-CUT,M01,50,20,Medium,60.0
+B,2,B-HT,M03,80,35,Maximum,193.33
+B,3,B-ASM,M02,40,15,Medium,36.67
+C,1,C-ASM,M02,45,15,Medium,41.25
+C,2,C-HT,M03,75,35,Maximum,181.25
+C,3,C-INS,M05,30,10,Light,16.0

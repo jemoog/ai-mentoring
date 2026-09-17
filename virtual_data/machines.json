@@ -1,0 +1,52 @@
+[
+  {
+    "machine_id":"M01",
+    "machine_name":"CNC Cutter 1",
+    "available_products":"A,B",
+    "capacity_per_hour":80,
+    "operation_power_kW":72,
+    "idle_power_kW":12,
+    "available_start_time":"06:00",
+    "available_end_time":"22:00"
+  },
+  {
+    "machine_id":"M02",
+    "machine_name":"Assembly Cell 1",
+    "available_products":"A,B,C",
+    "capacity_per_hour":60,
+    "operation_power_kW":55,
+    "idle_power_kW":10,
+    "available_start_time":"06:00",
+    "available_end_time":"22:00"
+  },
+  {
+    "machine_id":"M03",
+    "machine_name":"Heat Treatment Furnace",
+    "available_products":"B,C",
+    "capacity_per_hour":40,
+    "operation_power_kW":145,
+    "idle_power_kW":28,
+    "available_start_time":"00:00",
+    "available_end_time":"23:59"
+  },
+  {
+    "machine_id":"M04",
+    "machine_name":"Press Machine",
+    "available_products":"A,C",
+    "capacity_per_hour":50,
+    "operation_power_kW":125,
+    "idle_power_kW":24,
+    "available_start_time":"06:00",
+    "available_end_time":"22:00"
+  },
+  {
+    "machine_id":"M05",
+    "machine_name":"Inspection & Packing",
+    "available_products":"A,B,C",
+    "capacity_per_hour":100,
+    "operation_power_kW":32,
+    "idle_power_kW":6,
+    "available_start_time":"08:00",
+    "available_end_time":"20:00"
+  }
+]
