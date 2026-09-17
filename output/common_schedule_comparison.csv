@@ -1,0 +1,4 @@
+﻿schedule_name,scheduled_operations,scheduled_jobs,on_time_jobs,tardy_jobs,due_date_adherence_rate,total_tardiness_min,avg_tardiness_min,makespan_start,makespan_end,total_setup_time_min,total_energy_kWh,total_energy_cost,total_peak_overlap_slots,peak_period_energy_kWh,max_demand_kW,total_co2_kg
+EDD,240,80,24,56,0.3,185880.0,2323.5,2026-09-21 06:00:00,2026-10-03 11:00:00,2220,72606.91,10233143.9,571,12021.5,429.0,39743.462
+Energy_Aware_v1,240,80,17,63,0.2125,209875.0,2623.44,2026-09-21 06:00:00,2026-10-03 11:00:00,2220,73280.909,10081785.91,431,9423.25,429.0,40148.529
+Slack_Aware_Energy,240,80,18,62,0.225,192865.0,2410.81,2026-09-21 06:00:00,2026-10-03 11:00:00,2220,72794.826,10113902.74,494,10171.5,429.0,39855.746
