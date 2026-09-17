@@ -1,0 +1,12 @@
+﻿metric_key,metric_name,EDD,Energy_Aware_v1,Slack_Aware_Energy
+due_date_adherence_rate,납기 준수율,0.3,0.2125,0.225
+on_time_jobs,납기 내 작업 수,24,17,18
+tardy_jobs,지연 작업 수,56,63,62
+total_tardiness_min,총 지연시간(분),185880.0,209875.0,192865.0
+avg_tardiness_min,평균 지연시간(분),2323.5,2623.44,2410.81
+total_setup_time_min,총 셋업시간(분),2220,2220,2220
+total_operation_energy_kWh_est,총 에너지(kWh)-EDD,69899.984,,
+total_energy_kWh_est,총 에너지(kWh),,70975.741,71135.024
+total_energy_cost_est,총 전력비용,,9772085.74,9889740.41
+total_peak_overlap_slots,피크 겹침 슬롯,,439,506
+total_co2_kg_est,CO2(kg),,38877.652,38972.288
