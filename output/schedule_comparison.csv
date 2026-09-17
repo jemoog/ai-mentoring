@@ -1,0 +1,10 @@
+﻿metric,EDD,EDD_Energy_Aware
+due_date_adherence_rate,0.3,0.2125
+tardy_jobs,56,63
+total_tardiness_min,185880.0,209875.0
+total_setup_time_min,2220,2220
+total_operation_energy_kWh_est,69899.984,
+total_energy_kWh_est,,70975.741
+total_energy_cost_est,,9772085.74
+total_peak_overlap_slots,,439
+total_co2_kg_est,,38877.652
