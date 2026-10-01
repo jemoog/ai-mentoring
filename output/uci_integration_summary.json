@@ -1,0 +1,46 @@
+{
+  "uci_file": null,
+  "profile_rows": 3,
+  "schedules": [
+    {
+      "schedule_name": "fifo_schedule",
+      "uci_total_energy_kWh": 85083.255,
+      "uci_total_energy_cost": 11937572.5,
+      "uci_total_peak_overlap_slots": 550,
+      "uci_total_co2_kg": 47373.299,
+      "enriched_file": "fifo_schedule_uci_enriched.csv"
+    },
+    {
+      "schedule_name": "edd_schedule",
+      "uci_total_energy_kWh": 84915.353,
+      "uci_total_energy_cost": 11843226.73,
+      "uci_total_peak_overlap_slots": 571,
+      "uci_total_co2_kg": 47281.826,
+      "enriched_file": "edd_schedule_uci_enriched.csv"
+    },
+    {
+      "schedule_name": "energy_aware_schedule",
+      "uci_total_energy_kWh": 84915.353,
+      "uci_total_energy_cost": 11636567.73,
+      "uci_total_peak_overlap_slots": 431,
+      "uci_total_co2_kg": 47281.826,
+      "enriched_file": "energy_aware_schedule_uci_enriched.csv"
+    },
+    {
+      "schedule_name": "slack_aware_energy_schedule",
+      "uci_total_energy_kWh": 84915.353,
+      "uci_total_energy_cost": 11691911.62,
+      "uci_total_peak_overlap_slots": 494,
+      "uci_total_co2_kg": 47281.826,
+      "enriched_file": "slack_aware_energy_schedule_uci_enriched.csv"
+    },
+    {
+      "schedule_name": "slack_aware_energy_v2_schedule",
+      "uci_total_energy_kWh": 84915.353,
+      "uci_total_energy_cost": 11767555.25,
+      "uci_total_peak_overlap_slots": 517,
+      "uci_total_co2_kg": 47281.826,
+      "enriched_file": "slack_aware_energy_v2_schedule_uci_enriched.csv"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+﻿load_type,uci_mean_usage_kWh,uci_median_usage_kWh,uci_max_usage_kWh,sample_count,uci_mean_co2_raw,co2_kg_per_kWh,uci_energy_multiplier_vs_medium,profile_source
+Light,35,35,50,0,,0.35,0.5,fallback_profile_replace_with_real_uci
+Medium,75,75,100,0,,0.45,1.0,fallback_profile_replace_with_real_uci
+Maximum,140,140,180,0,,0.6,1.85,fallback_profile_replace_with_real_uci

@@ -1,0 +1,6 @@
+﻿schedule_name,uci_total_energy_kWh,uci_total_energy_cost,uci_total_peak_overlap_slots,uci_total_co2_kg,enriched_file
+fifo_schedule,85083.255,11937572.5,550,47373.299,fifo_schedule_uci_enriched.csv
+edd_schedule,84915.353,11843226.73,571,47281.826,edd_schedule_uci_enriched.csv
+energy_aware_schedule,84915.353,11636567.73,431,47281.826,energy_aware_schedule_uci_enriched.csv
+slack_aware_energy_schedule,84915.353,11691911.62,494,47281.826,slack_aware_energy_schedule_uci_enriched.csv
+slack_aware_energy_v2_schedule,84915.353,11767555.25,517,47281.826,slack_aware_energy_v2_schedule_uci_enriched.csv
