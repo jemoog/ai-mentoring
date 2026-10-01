@@ -66,7 +66,7 @@ def compute_duration_min(quantity, route_row, machine_row):
     capacity_time = quantity / machine_row['capacity_per_hour'] * 60
     return int(math.ceil(max(route_row['process_time_min'], capacity_time) / SLOT_MIN) * SLOT_MIN)
 
-def build_edd_schedule(job_orders, machines, routing, maint):
+def build_edd_schedule(job_orders, machines, routing, maint, sort_cols=None):
     for col in ['release_time','due_time']:
         job_orders[col] = pd.to_datetime(job_orders[col])
     maint['maintenance_start'] = pd.to_datetime(maint['maintenance_start'])
@@ -84,7 +84,9 @@ def build_edd_schedule(job_orders, machines, routing, maint):
     last_product = {m: None for m in machines.machine_id}
     schedule_rows = []
 
-    jobs = job_orders.sort_values(['due_time','priority','release_time','job_id']).reset_index(drop=True)
+    # sort_cols로 정렬 규칙 교체 가능 (FIFO: release_time, job_id)
+    sort_cols = sort_cols or ['due_time','priority','release_time','job_id']
+    jobs = job_orders.sort_values(sort_cols).reset_index(drop=True)
     for _, job in jobs.iterrows():
         current_ready = job.release_time
         product_routes = routing[routing.product_type == job.product_type].sort_values('process_step')

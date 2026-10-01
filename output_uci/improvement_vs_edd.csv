@@ -1,0 +1,5 @@
+﻿schedule_name,due_rate_diff_pctp_vs_edd,tardiness_change_pct_vs_edd,energy_cost_change_pct_vs_edd,peak_slots_change_pct_vs_edd,peak_energy_change_pct_vs_edd,facility_max_demand_change_pct_vs_edd,energy_incl_idle_change_pct_vs_edd,co2_incl_idle_change_pct_vs_edd,setup_time_change_pct_vs_edd
+FIFO,6.25,29.51,-0.55,-4.67,-6.37,-2.38,-0.47,-0.47,4.05
+Energy_Aware_v1,-8.75,12.91,-2.67,-14.02,-12.76,0.0,0.23,0.23,0.0
+Slack_Aware_Energy,-7.5,3.76,-1.21,-8.15,-8.44,0.0,-0.14,-0.14,0.0
+Slack_Aware_Energy_v2,8.75,-17.43,-3.66,-12.83,-13.63,-0.75,-0.32,-0.32,-39.41

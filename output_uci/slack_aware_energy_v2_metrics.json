@@ -1,0 +1,43 @@
+{
+  "scheduled_operations": 240,
+  "scheduled_jobs": 80,
+  "on_time_jobs": 31,
+  "tardy_jobs": 49,
+  "due_date_adherence_rate": 0.3875,
+  "total_tardiness_min": 153490.0,
+  "makespan_end": "2026-10-03 11:00:00",
+  "total_setup_time_min": 1345,
+  "total_energy_cost_est": 9695664.1,
+  "total_peak_overlap_slots": 802,
+  "policy_mode_counts": {
+    "earliest": 212,
+    "bottleneck_limited": 15,
+    "energy_shift": 13
+  },
+  "shifted_operations": 5,
+  "params": {
+    "shift_load_types": [
+      "Maximum"
+    ],
+    "min_slack_h": 8.0,
+    "slack_use_ratio": 0.5,
+    "max_window_h": 24.0,
+    "bottleneck_threshold": 1.0,
+    "bottleneck_window_h": 0.0,
+    "w_peak_slot": 3000.0,
+    "w_demand_kW_slot": 50.0,
+    "w_delay_min": 30.0,
+    "demand_cap_kW": 650.0,
+    "iterations": 1500,
+    "seed": 42,
+    "obj_tardy_job_min": 600.0,
+    "obj_cost_per_min": 0.02
+  },
+  "machine_load_ratio": {
+    "M01": 1.279,
+    "M02": 1.478,
+    "M03": 1.474,
+    "M04": 0.848,
+    "M05": 0.979
+  }
+}

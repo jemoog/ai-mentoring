@@ -1,0 +1,56 @@
+{
+  "schedule_name": "Energy_Aware_v1",
+  "scheduled_operations": 240,
+  "scheduled_jobs": 80,
+  "on_time_jobs": 17,
+  "tardy_jobs": 63,
+  "due_date_adherence_rate": 0.2125,
+  "total_tardiness_min": 209875.0,
+  "avg_tardiness_min": 2623.44,
+  "max_tardiness_min": 8100.0,
+  "makespan_start": "2026-09-21 06:00:00",
+  "makespan_end": "2026-10-03 11:00:00",
+  "total_setup_time_min": 2220,
+  "total_energy_kWh": 69899.984,
+  "idle_energy_kWh": 2729.5,
+  "total_energy_incl_idle_kWh": 72629.484,
+  "total_energy_cost": 9775925.24,
+  "avg_price_per_kWh": 139.86,
+  "total_peak_overlap_slots": 791,
+  "peak_period_energy_kWh": 16538.867,
+  "peak_period_energy_share": 0.2366,
+  "max_demand_kW": 429.0,
+  "facility_max_demand_kW": 741.994,
+  "facility_peak_time_max_demand_kW": 713.783,
+  "total_co2_kg": 32049.142,
+  "total_co2_incl_idle_kg": 33300.618,
+  "total_co2_kg_loadtype_proxy": 38329.379,
+  "ops_outside_energy_context": 0,
+  "machine_busy_hours": [
+    {
+      "machine_id": "M01",
+      "busy_hours": 153.58,
+      "idle_energy_kWh": 108.0
+    },
+    {
+      "machine_id": "M02",
+      "busy_hours": 172.25,
+      "idle_energy_kWh": 247.5
+    },
+    {
+      "machine_id": "M03",
+      "busy_hours": 260.5,
+      "idle_energy_kWh": 385.0
+    },
+    {
+      "machine_id": "M04",
+      "busy_hours": 93.25,
+      "idle_energy_kWh": 1662.0
+    },
+    {
+      "machine_id": "M05",
+      "busy_hours": 86.42,
+      "idle_energy_kWh": 327.0
+    }
+  ]
+}

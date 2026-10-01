@@ -1,0 +1,57 @@
+{
+  "FIFO": {
+    "release": 0,
+    "precedence": 0,
+    "eligibility": 0,
+    "machine_overlap": 0,
+    "availability": 0,
+    "maintenance": 0,
+    "missing_setup": 21,
+    "missing_ops": 0,
+    "total_violations": 21
+  },
+  "EDD": {
+    "release": 0,
+    "precedence": 0,
+    "eligibility": 0,
+    "machine_overlap": 0,
+    "availability": 0,
+    "maintenance": 0,
+    "missing_setup": 23,
+    "missing_ops": 0,
+    "total_violations": 23
+  },
+  "Energy_Aware_v1": {
+    "release": 0,
+    "precedence": 0,
+    "eligibility": 0,
+    "machine_overlap": 0,
+    "availability": 0,
+    "maintenance": 0,
+    "missing_setup": 26,
+    "missing_ops": 0,
+    "total_violations": 26
+  },
+  "Slack_Aware_Energy": {
+    "release": 0,
+    "precedence": 0,
+    "eligibility": 0,
+    "machine_overlap": 0,
+    "availability": 0,
+    "maintenance": 0,
+    "missing_setup": 33,
+    "missing_ops": 0,
+    "total_violations": 33
+  },
+  "Slack_Aware_Energy_v2": {
+    "release": 0,
+    "precedence": 0,
+    "eligibility": 0,
+    "machine_overlap": 0,
+    "availability": 0,
+    "maintenance": 0,
+    "missing_setup": 0,
+    "missing_ops": 0,
+    "total_violations": 0
+  }
+}

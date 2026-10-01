@@ -1,0 +1,56 @@
+{
+  "schedule_name": "FIFO",
+  "scheduled_operations": 240,
+  "scheduled_jobs": 80,
+  "on_time_jobs": 29,
+  "tardy_jobs": 51,
+  "due_date_adherence_rate": 0.3625,
+  "total_tardiness_min": 240735.0,
+  "avg_tardiness_min": 3009.19,
+  "max_tardiness_min": 9360.0,
+  "makespan_start": "2026-09-21 06:00:00",
+  "makespan_end": "2026-10-03 11:15:00",
+  "total_setup_time_min": 2310,
+  "total_energy_kWh": 69929.251,
+  "idle_energy_kWh": 2196.5,
+  "total_energy_incl_idle_kWh": 72125.751,
+  "total_energy_cost": 9988421.27,
+  "avg_price_per_kWh": 142.84,
+  "total_peak_overlap_slots": 877,
+  "peak_period_energy_kWh": 17750.95,
+  "peak_period_energy_share": 0.2538,
+  "max_demand_kW": 429.0,
+  "facility_max_demand_kW": 724.369,
+  "facility_peak_time_max_demand_kW": 724.369,
+  "total_co2_kg": 32062.56,
+  "total_co2_incl_idle_kg": 33069.655,
+  "total_co2_kg_loadtype_proxy": 38345.082,
+  "ops_outside_energy_context": 0,
+  "machine_busy_hours": [
+    {
+      "machine_id": "M01",
+      "busy_hours": 154.25,
+      "idle_energy_kWh": 48.0
+    },
+    {
+      "machine_id": "M02",
+      "busy_hours": 172.5,
+      "idle_energy_kWh": 247.5
+    },
+    {
+      "machine_id": "M03",
+      "busy_hours": 261.08,
+      "idle_energy_kWh": 119.0
+    },
+    {
+      "machine_id": "M04",
+      "busy_hours": 93.25,
+      "idle_energy_kWh": 1506.0
+    },
+    {
+      "machine_id": "M05",
+      "busy_hours": 86.42,
+      "idle_energy_kWh": 276.0
+    }
+  ]
+}

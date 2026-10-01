@@ -1,0 +1,6 @@
+﻿,release,precedence,eligibility,machine_overlap,availability,maintenance,missing_setup,missing_ops,total_violations
+FIFO,0,0,0,0,0,0,21,0,21
+EDD,0,0,0,0,0,0,23,0,23
+Energy_Aware_v1,0,0,0,0,0,0,26,0,26
+Slack_Aware_Energy,0,0,0,0,0,0,33,0,33
+Slack_Aware_Energy_v2,0,0,0,0,0,0,0,0,0

@@ -281,7 +281,8 @@ def main():
     machines = load_csv(inp, 'machines.csv', 7148716)
     maint = load_csv(inp, 'maintenance_schedule.csv', 7148718)
     routing = load_csv(inp, 'product_routing.csv', 7148720)
-    tariff = load_csv(inp, 'tou_tariff.csv', 7148722)
+    # UCI 결합 후 생성되는 6주 확장 요금표가 있으면 우선 사용 (1주 요금표 밖 = 고정단가/피크0 편향 제거)
+    tariff = pd.read_csv(inp/'tou_tariff_extended.csv') if (inp/'tou_tariff_extended.csv').exists() else load_csv(inp, 'tou_tariff.csv', 7148722)
 
     schedule = build_schedule(job_orders, machines, routing, maint, tariff)
     schedule.to_csv(out/'slack_aware_energy_schedule.csv', index=False, encoding='utf-8-sig')
