@@ -2,8 +2,9 @@
 스케줄 제약조건 검증기.
 
 검사 항목
-- release_time 이전 시작 금지
-- 제품별 공정 순서 (이전 공정 종료 후 다음 공정 시작)
+- release_time 이전 가공 시작 금지
+- 제품별 공정 순서 (이전 공정 종료 후 다음 공정 '가공' 시작)
+  셋업은 부품 없이 하는 설비 준비 작업이므로 이전 공정 종료 전에 시작해도 된다 (가공 시작 = 시작 + 셋업)
 - 적격 설비 배정
 - 설비 중복(동시 2작업) 금지
 - 설비 일일 가동시간 준수
@@ -45,13 +46,14 @@ def validate(s, jobs, machines, routing, maint):
     v = {"release": 0, "precedence": 0, "eligibility": 0, "machine_overlap": 0,
          "availability": 0, "maintenance": 0, "missing_setup": 0, "missing_ops": 0}
 
+    s["proc_start"] = s["start_time"] + pd.to_timedelta(s["setup_time_min"].fillna(0), unit="min")
     for jid, g in s.groupby("job_id"):
         g = g.sort_values("process_step")
-        if g.start_time.min() < pd.Timestamp(jobs.loc[jid, "release_time"]):
+        if g.proc_start.min() < pd.Timestamp(jobs.loc[jid, "release_time"]):
             v["release"] += 1
         if len(g) != int(jobs.loc[jid, "required_process_count"]):
             v["missing_ops"] += 1
-        ends = g.end_time.tolist(); starts = g.start_time.tolist()
+        ends = g.end_time.tolist(); starts = g.proc_start.tolist()
         v["precedence"] += sum(starts[i + 1] < ends[i] for i in range(len(g) - 1))
     for _, r in s.iterrows():
         if (r.product_type, r.process_step, r.machine_id) not in elig:

@@ -1,0 +1,13 @@
+{
+  "scheduled_operations": 240,
+  "scheduled_jobs": 80,
+  "on_time_jobs": 50,
+  "tardy_jobs": 30,
+  "due_date_adherence_rate": 0.625,
+  "total_tardiness_min": 46680.0,
+  "avg_tardiness_min": 583.5,
+  "makespan_start": "2026-09-21 06:00:00",
+  "makespan_end": "2026-09-28 13:40:00",
+  "total_setup_time_min": 2100,
+  "total_operation_energy_kWh_est": 39451.268
+}

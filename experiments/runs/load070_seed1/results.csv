@@ -1,0 +1,7 @@
+﻿scenario,method,on_time_jobs,due_date_adherence_rate,total_tardiness_min,avg_tardiness_min,max_tardiness_min,makespan_end,total_setup_time_min,total_energy_kWh,idle_energy_kWh,total_energy_incl_idle_kWh,total_energy_cost,avg_price_per_kWh,total_peak_overlap_slots,peak_period_energy_kWh,peak_period_energy_share,max_demand_kW,facility_max_demand_kW,facility_peak_time_max_demand_kW,total_co2_incl_idle_kg,violations,missing_setup,shifted_operations
+load070_seed1,FIFO,60,0.75,21915.0,273.94,2575.0,2026-09-27 12:40:00,2100,32663.018,1411.5,34074.518,4693490.49,143.69,437,8584.233,0.2628,429.0,741.994,731.987,15623.162,20,20,
+load070_seed1,EDD,80,1.0,0.0,0.0,0.0,2026-09-27 09:45:00,1800,32536.016,1394.5,33930.516,4687784.12,144.08,431,8439.283,0.2594,429.0,724.369,724.369,15557.142,27,27,
+load070_seed1,Energy_Aware_v1,63,0.7875,4400.0,55.0,675.0,2026-09-28 08:45:00,1800,32536.016,2878.0,35414.016,4057969.05,124.72,198,3185.55,0.0979,429.0,737.033,574.987,16237.327,36,36,
+load070_seed1,Slack_Aware_v1,80,1.0,0.0,0.0,0.0,2026-09-27 12:45:00,1800,32536.016,1853.0,34389.016,4314821.01,132.62,300,5268.667,0.1619,429.0,734.288,574.641,15767.364,37,37,
+load070_seed1,EDD_setup_correct,80,1.0,0.0,0.0,0.0,2026-09-27 09:45:00,1395,32426.595,1456.0,33882.595,4688863.81,144.6,404,8217.083,0.2534,429.0,720.302,720.302,15535.169,0,0,0.0
+load070_seed1,Slack_Aware_v2,80,1.0,0.0,0.0,0.0,2026-09-27 17:30:00,1550,32455.976,2190.0,34645.976,4250886.78,130.97,287,4631.35,0.1427,429.0,752.661,589.437,15885.183,0,0,31.0
