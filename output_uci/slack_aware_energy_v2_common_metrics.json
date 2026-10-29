@@ -22,6 +22,7 @@
   "max_demand_kW": 429.0,
   "facility_max_demand_kW": 736.401,
   "facility_peak_time_max_demand_kW": 731.987,
+  "demand_charge_est_month": 6126856,
   "total_co2_kg": 31935.668,
   "total_co2_incl_idle_kg": 33112.408,
   "total_co2_kg_loadtype_proxy": 38192.836,

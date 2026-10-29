@@ -14,6 +14,13 @@
     "bottleneck_limited": 16
   },
   "shifted_operations": 0,
+  "operations_by_machine": {
+    "M01": 62,
+    "M02": 53,
+    "M03": 53,
+    "M04": 27,
+    "M05": 45
+  },
   "params": {
     "shift_load_types": [
       "Maximum"
@@ -24,9 +31,11 @@
     "bottleneck_threshold": 0.8,
     "bottleneck_window_h": 0.0,
     "w_peak_slot": 3000.0,
-    "w_demand_kW_slot": 50.0,
     "w_delay_min": 30.0,
-    "demand_cap_kW": 650.0,
+    "w_demand_kW": 0.0,
+    "demand_window_h": 2.0,
+    "demand_min_slack_h": 8.0,
+    "obj_demand_min_per_kW": 0.0,
     "iterations": 1500,
     "seed": 42,
     "obj_tardy_job_min": 600.0,

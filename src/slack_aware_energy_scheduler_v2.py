@@ -19,11 +19,17 @@ v2 핵심 아이디어
 7) 작업 순서 탐색(local search): EDD 순서에서 시작해 swap/insert 이동으로
    J = 총지연 + 지연건수 패널티 + 에너지비용 가중합 을 개선 (재현 가능하도록 seed 고정)
 8) numpy 슬롯 배열 기반으로 구현해 기존 대비 수십 배 빠름 → 탐색/튜닝 가능
+9) (5차시) 대체 설비: 공정 단계마다 여러 설비 옵션을 비교. 기본은 가장 빨리 끝나는 설비,
+   energy_shift 대상이면 전력비까지 고려해 선택 (비효율 대체 설비는 납기 여유가 없을 때 주로 사용)
+10) (5차시) 최대수요전력 제어 (--demand-mode, 기본 꺼짐): 배정 시 공장 최대수요(UCI 기저부하 예측 + 라인)
+   증가분에 패널티, slack 8시간 이상·비병목 설비 공정만 최대 2시간 이동.
+   기본요금(최대수요)은 줄지만 전력량요금이 늘 수 있어 선택 옵션으로 둠
 
 출력: slack_aware_energy_v2_schedule.csv, slack_aware_energy_v2_metrics.json
 
 실행 예:
 python src/slack_aware_energy_scheduler_v2.py --input-dir ./virtual_data --output-dir ./output_uci --iterations 1500
+python src/slack_aware_energy_scheduler_v2.py --input-dir ./virtual_data --output-dir ./output_uci --demand-mode
 """
 import argparse
 import json
@@ -49,15 +55,25 @@ DEFAULT_PARAMS = {
     "bottleneck_window_h": 0.0,        # 병목 설비 최대 이동 범위
     # --- 후보 점수 가중치 (원 단위로 환산) ---
     "w_peak_slot": 3000.0,             # 피크 슬롯 1개(15분)당 패널티
-    "w_demand_kW_slot": 50.0,          # 수요상한 초과 kW x 슬롯당 패널티
-    "w_delay_min": 30.0,               # 최조 시작 대비 지연 1분당 패널티
-    "demand_cap_kW": 650.0,            # 공장 전체(UCI 기저 + 라인) 수요전력 상한
+    "w_delay_min": 30.0,               # 최조 완료 대비 지연 1분당 패널티
+    # --- 최대수요전력 제어 (공장 전체 = UCI 기저부하 예측 + 라인) ---
+    "w_demand_kW": 0.0,                # 배정 시 공장 최대수요 증가 1kW당 패널티(원). 0이면 끔
+    "demand_window_h": 2.0,            # 최대수요 회피용 최대 이동 범위 (모든 공정)
+    "demand_min_slack_h": 8.0,         # 이 slack 이상일 때만 최대수요 회피 이동 허용
+    "obj_demand_min_per_kW": 0.0,      # 순서 탐색 목적함수: 최대수요 1kW 증가 = 지연 n분
+    # ※ 최대수요 제어는 기본 꺼짐. 켜면 기본요금(최대수요)은 줄지만 일부 작업이 저녁 피크요금 시간대로
+    #   이동해 전력량요금이 늘 수 있다 → DEMAND_MODE 프리셋 / --demand-mode 옵션으로 선택
     # --- 작업 순서 탐색 ---
     "iterations": 1500,              # 약 2분. 시드 42/7/123 모두 300회 대비 총지연 약 7% 추가 감소
     "seed": 42,
     "obj_tardy_job_min": 600.0,        # 지연 작업 1건 = 지연 600분과 동일 취급
     "obj_cost_per_min": 0.02,          # 에너지비용 50원 = 지연 1분 (납기가 에너지보다 우선)
 }
+
+
+# 최대수요 제어 모드 프리셋 (시나리오 실험으로 선택: 부하율 70%에서 공장 최대수요 약 -6%)
+DEMAND_MODE = {"w_demand_kW": 8000.0, "demand_window_h": 2.0, "demand_min_slack_h": 8.0,
+               "obj_demand_min_per_kW": 0.0}
 
 
 # ---------------------------------------------------------------------------
@@ -99,21 +115,25 @@ class Problem:
         self.products = sorted(routing.product_type.unique())
         self.pcode = {p: i for i, p in enumerate(self.products)}
 
-        # 작업별 공정 정보 사전 계산
+        # 작업별 공정 정보 사전 계산 (공정 단계마다 대체 설비 옵션 목록)
         self.ops = {}
         for jid, job in self.jobs.iterrows():
             steps = []
-            for _, rt in routing[routing.product_type == job.product_type].sort_values("process_step").iterrows():
-                m = self.machines.loc[rt.eligible_machine_id]
-                cap_min = job.quantity / m.capacity_per_hour * 60
-                proc_min = int(math.ceil(max(rt.process_time_min, cap_min) / SLOT_MIN) * SLOT_MIN)
-                steps.append({
-                    "step": int(rt.process_step), "process_id": rt.process_id, "machine": rt.eligible_machine_id,
-                    "load_type": rt.load_type, "proc_min": proc_min, "setup_min": int(rt.setup_time_min),
-                    "power": float(m.operation_power_kW),
-                })
-            for i, s in enumerate(steps):
-                s["downstream_slots"] = sum(x["proc_min"] for x in steps[i + 1:]) // SLOT_MIN
+            rts = routing[routing.product_type == job.product_type].sort_values("process_step")
+            for step_no, grp in rts.groupby("process_step", sort=True):
+                options = []
+                for rt in grp.itertuples():
+                    m = self.machines.loc[rt.eligible_machine_id]
+                    cap_min = job.quantity / m.capacity_per_hour * 60
+                    proc_min = int(math.ceil(max(rt.process_time_min, cap_min) / SLOT_MIN) * SLOT_MIN)
+                    options.append({"machine": rt.eligible_machine_id, "process_id": rt.process_id,
+                                    "load_type": rt.load_type, "proc_min": proc_min,
+                                    "setup_min": int(rt.setup_time_min), "power": float(m.operation_power_kW)})
+                steps.append({"step": int(step_no), "options": options,
+                              "load_type": options[0]["load_type"],
+                              "min_proc": min(o["proc_min"] for o in options)})
+            for i, st in enumerate(steps):
+                st["downstream_slots"] = sum(x["min_proc"] for x in steps[i + 1:]) // SLOT_MIN
             self.ops[jid] = steps
         # (제품코드, 설비) → 셋업시간(분), 설비 가동전력
         self.setup_min = {(self.pcode[r.product_type], r.eligible_machine_id): int(r.setup_time_min)
@@ -123,12 +143,18 @@ class Problem:
         self.due_min = {j: (self.jobs.loc[j, "due_time"] - self.t0).total_seconds() / 60 for j in self.job_ids}
 
         # 설비 부하율 (계획 1주 기준 필요시간 / 가용시간)
+        # 대체 설비가 있으면 처리 속도(1/가공시간) 비율로 필요시간을 나눠 배분 (pooled 부하율)
         week = 7 * 24 * 60 // SLOT_MIN
         need = {m: 0.0 for m in self.mids}
         for steps in self.ops.values():
-            for s in steps:
-                need[s["machine"]] += s["proc_min"] / 60
+            for st in steps:
+                speed = {o["machine"]: 1.0 / o["proc_min"] for o in st["options"]}
+                tot = sum(speed.values())
+                for o in st["options"]:
+                    need[o["machine"]] += o["proc_min"] / 60 * speed[o["machine"]] / tot
         self.load_ratio = {m: need[m] / (self.avail[m][:week].sum() * SLOT_MIN / 60) for m in self.mids}
+        # 공장 수요전력 기준선: 계획 1주 중 기저부하(UCI 평균 프로파일) 최대값
+        self.base_week_max = float(self.base[:week].max())
 
     def floor_idx(self, ts):
         return int(math.floor((pd.Timestamp(ts) - self.t0) / pd.Timedelta(minutes=SLOT_MIN)))
@@ -154,6 +180,17 @@ def feasible_starts(free, ready, d):
 
 
 def simulate(P, order, params, record=False):
+    """주어진 작업 순서로 공정을 하나씩 배정하는 시뮬레이션.
+
+    공정 단계마다
+      1) 대체 설비 옵션별로 배정 가능한 시작 후보를 모은다 (셋업 정합성 검사 포함)
+      2) 가장 빨리 끝나는 후보(완료 e_end)를 기준으로 하류공정 인지 slack을 계산
+      3) 허용 범위(완료 지연 슬롯) 결정
+         - energy_shift : 시간 이동 대상 Load_Type + slack 충분 + 비병목 설비 → 전력비·피크까지 고려
+         - demand_shift : 최대수요 제어용 짧은 이동 (모든 공정, slack 충분할 때만) → 최대수요 증가분만 고려
+         - earliest     : 가장 빨리 끝나는 후보 (동률이면 전력비 낮은 설비)
+      4) 점수 최소 후보 배정
+    """
     shift_types = set(params["shift_load_types"])
     busy = {m: np.zeros(P.H, bool) for m in P.mids}
     timeline = {m: [] for m in P.mids}       # 설비별 [(start, end_slot, product_code, setup_min)] 정렬 유지
@@ -162,102 +199,126 @@ def simulate(P, order, params, record=False):
     rows = []
     row_at = {}                               # (설비, 시작슬롯) → rows 인덱스 (셋업 추가 시 갱신용)
     slot_h = SLOT_MIN / 60
+    run_max = P.base_week_max                 # 지금까지의 공장 최대수요 (기저부하 최대에서 시작)
+    w_dem = params["w_demand_kW"]
+    dem_win = int(params["demand_window_h"] * 60 // SLOT_MIN) if w_dem > 0 else 0
+    energy_win = int(params["max_window_h"] * 60 // SLOT_MIN)
+
+    def op_cost(t, d, su, p):
+        ss = int(math.ceil(su / SLOT_MIN))
+        return (p * SETUP_POWER_RATIO * slot_h * (P.c_price[t + ss] - P.c_price[t])
+                + p * slot_h * (P.c_price[t + d] - P.c_price[t + ss]))
+
+    def op_demand_peak(t, d, su, p):
+        ss = int(math.ceil(su / SLOT_MIN))
+        add = np.full(d, p)
+        add[:ss] = p * SETUP_POWER_RATIO
+        return float((P.base[t:t + d] + line[t:t + d] + add).max())
 
     for jid in order:
         prod = P.pcode[P.jobs.loc[jid, "product_type"]]
         ready = P.release_idx[jid]
         due_min = P.due_min[jid]
         end_min = None
-        for op in P.ops[jid]:
-            m = op["machine"]
-            free = P.avail[m] & ~busy[m]
-            tl = timeline[m]
-            starts_tl = [x[0] for x in tl]
-            d0 = op["proc_min"] // SLOT_MIN
-            d1 = int(math.ceil((op["proc_min"] + op["setup_min"]) / SLOT_MIN))
+        for st in P.ops[jid]:
+            collect = max(energy_win if st["load_type"] in shift_types else 0, dem_win)
 
-            def check(t, d, with_setup):
-                """시간상 직전/직후 공정과의 셋업 정합성 검사.
-
-                반환: None(불가) / ()(가능) / (k, su_next, s_slots_next)(가능, 단 직후 공정에 셋업 추가 필요)
-                - 직전 공정 제품이 다르면 셋업 포함 후보만, 같으면(또는 없으면) 셋업 없는 후보만 허용
-                - 직후 공정이 다른 제품이고 셋업 없이 배정돼 있으면, 빈 구간 안에 그 공정의 셋업 시간을
-                  확보할 수 있을 때만 허용 (셋업은 부품 도착 전에 하는 설비 준비 작업으로 간주)
-                  v2 초기 버전은 이 경우를 무조건 금지해 빈 구간을 버리는 문제가 있었음
-                """
-                k = bisect_right(starts_tl, t)
-                pred_prod = tl[k - 1][2] if k > 0 else None
-                need_setup = pred_prod is not None and pred_prod != prod
-                if need_setup != with_setup:
-                    return None
-                if k < len(tl):
-                    nxt = tl[k]
-                    if nxt[2] != prod and nxt[3] == 0:
-                        su_n = P.setup_min[(nxt[2], m)]
-                        sn = int(math.ceil(su_n / SLOT_MIN))
-                        if t + d + sn > nxt[0] or not P.avail[m][nxt[0] - sn:nxt[0]].all():
-                            return None
-                        return (k, su_n, sn)
-                return ()
-
-            # 후보: (start, slots, setup_min)
-            # 최조 유효 시작 이후 max_window_h 범위까지만 수집 (속도)
+            # 1) 설비 옵션별 후보 수집: (start, slots, setup_min, fix, option)
             cands = []
-            limit = None
-            # 이동 대상이 아닌 공정은 최조 유효 후보만 필요
-            max_win_slots = int(params["max_window_h"] * 60 // SLOT_MIN) if op["load_type"] in shift_types else 0
-            for d, with_setup in ((d0, False), (d1, True)):
-                for t in feasible_starts(free, ready, d):
-                    t = int(t)
-                    if limit is not None and t > limit:
-                        break
-                    fix = check(t, d, with_setup)
-                    if fix is not None:
-                        cands.append((t, d, op["setup_min"] if with_setup else 0, fix))
-                        if limit is None or t + max_win_slots < limit:
-                            limit = t + max_win_slots
-            if not cands:
-                raise RuntimeError(f"No feasible slot for {jid} step {op['step']} (horizon too short?)")
-            cands.sort()
-            t_e, d_e = cands[0][0], cands[0][1]
+            for opt in st["options"]:
+                m = opt["machine"]
+                free = P.avail[m] & ~busy[m]
+                tl = timeline[m]
+                starts_tl = [x[0] for x in tl]
 
-            # 하류공정 인지 slack (분)
-            slack_min = due_min - (t_e + d_e + op["downstream_slots"]) * SLOT_MIN
-            window = 0
-            mode = "earliest"
-            if op["load_type"] in shift_types and slack_min >= params["min_slack_h"] * 60:
+                def check(t, d, with_setup, m=m, tl=tl, starts_tl=starts_tl):
+                    """시간상 직전/직후 공정과의 셋업 정합성 검사.
+
+                    반환: None(불가) / ()(가능) / (k, su_next, s_slots_next)(가능, 단 직후 공정에 셋업 추가 필요)
+                    - 직전 공정 제품이 다르면 셋업 포함 후보만, 같으면(또는 없으면) 셋업 없는 후보만 허용
+                    - 직후 공정이 다른 제품이고 셋업 없이 배정돼 있으면, 빈 구간 안에 그 공정의 셋업 시간을
+                      확보할 수 있을 때만 허용 (셋업은 부품 도착 전에 하는 설비 준비 작업으로 간주)
+                    """
+                    k = bisect_right(starts_tl, t)
+                    pred_prod = tl[k - 1][2] if k > 0 else None
+                    need_setup = pred_prod is not None and pred_prod != prod
+                    if need_setup != with_setup:
+                        return None
+                    if k < len(tl):
+                        nxt = tl[k]
+                        if nxt[2] != prod and nxt[3] == 0:
+                            su_n = P.setup_min[(nxt[2], m)]
+                            sn = int(math.ceil(su_n / SLOT_MIN))
+                            if t + d + sn > nxt[0] or not P.avail[m][nxt[0] - sn:nxt[0]].all():
+                                return None
+                            return (k, su_n, sn)
+                    return ()
+
+                d0 = opt["proc_min"] // SLOT_MIN
+                d1 = int(math.ceil((opt["proc_min"] + opt["setup_min"]) / SLOT_MIN))
+                limit = None
+                for d, with_setup in ((d0, False), (d1, True)):
+                    for t in feasible_starts(free, ready, d):
+                        t = int(t)
+                        if limit is not None and t > limit:
+                            break
+                        fix = check(t, d, with_setup)
+                        if fix is not None:
+                            cands.append((t, d, opt["setup_min"] if with_setup else 0, fix, opt))
+                            if limit is None or t + collect < limit:
+                                limit = t + collect
+            if not cands:
+                raise RuntimeError(f"No feasible slot for {jid} step {st['step']} (horizon too short?)")
+
+            # 2) 가장 빨리 끝나는 후보 기준 slack (분)
+            e_end = min(c[0] + c[1] for c in cands)
+            best_e = min((c for c in cands if c[0] + c[1] == e_end),
+                         key=lambda c: (op_cost(c[0], c[1], c[2], c[4]["power"]), c[0]))
+            slack_min = due_min - (e_end + st["downstream_slots"]) * SLOT_MIN
+
+            # 3) 허용 범위 결정
+            win, mode, energy_ok = 0, "earliest", False
+            if st["load_type"] in shift_types and slack_min >= params["min_slack_h"] * 60:
                 win_h = min(params["max_window_h"], slack_min / 60 * params["slack_use_ratio"])
-                if P.load_ratio[m] >= params["bottleneck_threshold"]:
+                if P.load_ratio[best_e[4]["machine"]] >= params["bottleneck_threshold"]:
                     win_h = min(win_h, params["bottleneck_window_h"])
                     mode = "bottleneck_limited"
                 else:
                     mode = "energy_shift"
-                window = int(win_h * 60 // SLOT_MIN)
+                win = int(win_h * 60 // SLOT_MIN)
+                energy_ok = win > 0
+            # 최대수요 회피 이동도 비병목 설비에서만 (부하율 120~148% 실험에서 병목 이동 시 지연 +11%, 수요 감소 없음)
+            if (dem_win > 0 and slack_min >= params["demand_min_slack_h"] * 60
+                    and P.load_ratio[best_e[4]["machine"]] < params["bottleneck_threshold"]):
+                dw = min(dem_win, int(slack_min * params["slack_use_ratio"] // SLOT_MIN))
+                if dw > win:
+                    win = dw
+                    if not energy_ok:
+                        mode = "demand_shift"
 
-            if window > 0:
-                p = op["power"]
-                cap = params["demand_cap_kW"]
-                excess = np.maximum(0, P.base + line + p - cap)
-                c_ex = np.concatenate([[0], np.cumsum(excess)])
+            # 4) 선택
+            if win > 0:
                 best, best_score = None, None
-                for t, d, su, fix in cands:
-                    if t > t_e + window:
-                        break
-                    s_slots = int(math.ceil(su / SLOT_MIN))
-                    cost = (p * SETUP_POWER_RATIO * slot_h * (P.c_price[t + s_slots] - P.c_price[t])
-                            + p * slot_h * (P.c_price[t + d] - P.c_price[t + s_slots]))
-                    peak = P.c_peak[t + d] - P.c_peak[t]
-                    score = (cost + params["w_peak_slot"] * peak
-                             + params["w_demand_kW_slot"] * (c_ex[t + d] - c_ex[t])
-                             + params["w_delay_min"] * (t - t_e) * SLOT_MIN
-                             + 8.0 * su)  # 셋업 최소화 (v1과 동일 가중)
-                    if fix:  # 직후 공정에 셋업 추가 → 그 비용도 반영
-                        score += 8.0 * fix[1]
+                for c in cands:
+                    t, d, su, fix, opt = c
+                    if t + d > e_end + win:
+                        continue
+                    p = opt["power"]
+                    score = (params["w_delay_min"] * (t + d - e_end) * SLOT_MIN
+                             + 8.0 * su + (8.0 * fix[1] if fix else 0.0))
+                    if energy_ok:
+                        score += op_cost(t, d, su, p) + params["w_peak_slot"] * (P.c_peak[t + d] - P.c_peak[t])
+                    if w_dem > 0:
+                        score += w_dem * max(0.0, op_demand_peak(t, d, su, p) - run_max)
                     if best_score is None or score < best_score - 1e-9:
-                        best, best_score = (t, d, su, fix), score
-                t, d, su, fix = best
+                        best, best_score = c, score
+                chosen = best
             else:
-                t, d, su, fix = cands[0]
+                chosen = best_e
+            t, d, su, fix, opt = chosen
+            m, p = opt["machine"], opt["power"]
+            tl = timeline[m]
+            starts_tl = [x[0] for x in tl]
 
             # 배정
             busy[m][t:t + d] = True
@@ -272,6 +333,7 @@ def simulate(P, order, params, record=False):
                 line[n0 - sn:n0] += pn
                 add_cost = pn * slot_h * (P.c_price[n0] - P.c_price[n0 - sn])
                 total_cost += add_cost
+                run_max = max(run_max, float((P.base[n0 - sn:n0] + line[n0 - sn:n0]).max()))
                 if record:
                     ri = row_at.pop((m, n0))
                     row_at[(m, n0 - sn)] = ri
@@ -281,36 +343,37 @@ def simulate(P, order, params, record=False):
                     rows[ri]["energy_cost_est"] = round(rows[ri]["energy_cost_est"] + add_cost, 2)
                     rows[ri]["setup_added_later"] = True
             s_slots = int(math.ceil(su / SLOT_MIN))
-            p = op["power"]
             line[t:t + s_slots] += p * SETUP_POWER_RATIO
             line[t + s_slots:t + d] += p
-            cost = (p * SETUP_POWER_RATIO * slot_h * (P.c_price[t + s_slots] - P.c_price[t])
-                    + p * slot_h * (P.c_price[t + d] - P.c_price[t + s_slots]))
+            run_max = max(run_max, float((P.base[t:t + d] + line[t:t + d]).max()))
+            cost = op_cost(t, d, su, p)
             total_cost += cost
             total_peak += int(P.c_peak[t + d] - P.c_peak[t])
-            end_min = t * SLOT_MIN + su + op["proc_min"]
+            end_min = t * SLOT_MIN + su + opt["proc_min"]
             ready = t + d
             if record:
                 row_at[(m, t)] = len(rows)
                 rows.append({
                     "job_id": jid, "product_type": P.products[prod],
                     "quantity": int(P.jobs.loc[jid, "quantity"]), "priority": int(P.jobs.loc[jid, "priority"]),
-                    "due_time": P.jobs.loc[jid, "due_time"], "process_step": op["step"],
-                    "process_id": op["process_id"], "machine_id": m, "load_type": op["load_type"],
+                    "due_time": P.jobs.loc[jid, "due_time"], "process_step": st["step"],
+                    "process_id": opt["process_id"], "machine_id": m, "load_type": opt["load_type"],
                     "start_time": P.ts(t), "end_time": P.t0 + pd.Timedelta(minutes=end_min),
-                    "setup_time_min": su, "processing_time_min": op["proc_min"],
-                    "total_time_min": su + op["proc_min"], "energy_cost_est": round(cost, 2),
+                    "setup_time_min": su, "processing_time_min": opt["proc_min"],
+                    "total_time_min": su + opt["proc_min"], "energy_cost_est": round(cost, 2),
                     "peak_overlap_slots": int(P.c_peak[t + d] - P.c_peak[t]),
                     "slack_before_operation_min": round(slack_min, 1), "slack_policy_mode": mode,
-                    "shift_min": (t - t_e) * SLOT_MIN, "setup_added_later": False,
+                    "shift_min": (t + d - e_end) * SLOT_MIN, "setup_added_later": False,
+                    "n_machine_options": len(st["options"]),
                 })
         tard = max(0.0, end_min - due_min)
         total_tard += tard
         tardy += tard > 0
 
-    obj = total_tard + params["obj_tardy_job_min"] * tardy + params["obj_cost_per_min"] * total_cost
+    obj = (total_tard + params["obj_tardy_job_min"] * tardy + params["obj_cost_per_min"] * total_cost
+           + params["obj_demand_min_per_kW"] * (run_max - P.base_week_max))
     return {"objective": obj, "total_tardiness_min": total_tard, "tardy_jobs": tardy,
-            "energy_cost": total_cost, "peak_slots": total_peak, "rows": rows}
+            "energy_cost": total_cost, "peak_slots": total_peak, "facility_max_kW": run_max, "rows": rows}
 
 
 # ---------------------------------------------------------------------------
@@ -380,6 +443,7 @@ def compute_metrics(schedule, job_orders):
         "total_peak_overlap_slots": int(schedule.peak_overlap_slots.sum()),
         "policy_mode_counts": schedule["slack_policy_mode"].value_counts().to_dict(),
         "shifted_operations": int((schedule.shift_min > 0).sum()),
+        "operations_by_machine": schedule.machine_id.value_counts().sort_index().to_dict(),
     }
 
 
@@ -389,6 +453,7 @@ def main():
     ap.add_argument("--output-dir", default="./output_uci")
     ap.add_argument("--iterations", type=int, default=None, help="작업 순서 탐색 반복 수 (0이면 EDD 순서 고정)")
     ap.add_argument("--params", default=None, help="파라미터 JSON 파일 경로 (DEFAULT_PARAMS 덮어쓰기)")
+    ap.add_argument("--demand-mode", action="store_true", help="최대수요전력 제어 켜기 (DEMAND_MODE 프리셋)")
     args = ap.parse_args()
     inp, out = Path(args.input_dir), Path(args.output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -399,6 +464,8 @@ def main():
     params = {}
     if args.params:
         params.update(json.load(open(args.params, encoding="utf-8")))
+    if args.demand_mode:
+        params.update(DEMAND_MODE)
     if args.iterations is not None:
         params["iterations"] = args.iterations
 

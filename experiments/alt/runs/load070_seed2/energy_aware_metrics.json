@@ -1,0 +1,16 @@
+{
+  "scheduled_operations": 240,
+  "scheduled_jobs": 80,
+  "on_time_jobs": 64,
+  "tardy_jobs": 16,
+  "due_date_adherence_rate": 0.8,
+  "total_tardiness_min": 3190.0,
+  "avg_tardiness_min": 39.88,
+  "makespan_start": "2026-09-21 06:00:00",
+  "makespan_end": "2026-09-28 09:00:00",
+  "total_setup_time_min": 1965,
+  "total_energy_kWh_est": 34170.5,
+  "total_energy_cost_est": 4144449.25,
+  "total_peak_overlap_slots": 124,
+  "total_co2_kg_est": 18682.395
+}

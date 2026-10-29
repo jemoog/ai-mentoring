@@ -18,6 +18,8 @@ SLOT_MIN = 15
 SETUP_POWER_RATIO = 0.2
 LOAD_CO2_FACTOR = {"Light": 0.35, "Medium": 0.45, "Maximum": 0.60}  # 기존 프록시 (비교용)
 DEFAULT_CO2_FACTOR = 0.4585  # UCI 추정치 (energy_context가 없을 때만 사용)
+# 기본요금(최대수요 기준) 참고값: 한전 산업용(을) 고압A 선택II 8,320원/kW·월 (요금제·시점에 따라 다름)
+DEMAND_CHARGE_PER_KW_MONTH = 8320.0
 
 
 def _to_dt(df, cols):
@@ -227,6 +229,7 @@ def calculate_metrics(schedule, job_orders, machines, tariff=None, schedule_name
         "max_demand_kW": round(float(profile["line_power_kW"].max()), 3),
         "facility_max_demand_kW": round(float(active["facility_power_kW"].max()), 3),
         "facility_peak_time_max_demand_kW": round(float(peak_rows["facility_power_kW"].max()), 3),
+        "demand_charge_est_month": round(float(active["facility_power_kW"].max()) * DEMAND_CHARGE_PER_KW_MONTH),
         "total_co2_kg": round(float(schedule["common_co2_kg"].sum()), 3),
         "total_co2_incl_idle_kg": round(float(schedule["common_co2_kg"].sum()) + idle_kwh * co2_factor, 3),
         "total_co2_kg_loadtype_proxy": round(float(schedule["common_co2_kg_loadtype_proxy"].sum()), 3),

@@ -22,7 +22,8 @@ from uci_energy_integration import load_uci
 
 SLOT_MIN = 15
 METHODS = {"EDD": "edd_schedule.csv", "EDD_setup_correct": "edd_setup_correct_schedule.csv",
-           "Energy_Aware_v1": "energy_aware_schedule.csv", "Slack_Aware_v2": "slack_aware_v2_schedule.csv"}
+           "Energy_Aware_v1": "energy_aware_schedule.csv", "Slack_Aware_v2": "slack_aware_v2_schedule.csv",
+           "Slack_Aware_v2_demand": "slack_aware_v2_demand_schedule.csv"}
 
 
 def line_profile(sched, machines, ctx):
@@ -40,6 +41,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--uci-path", default="./uci_data/Steel_industry_data.csv")
     ap.add_argument("--exp-dir", default="./experiments")
+    ap.add_argument("--data-dir", default=None, help="시나리오 입력 폴더 (기본: <exp-dir>/data)")
+    ap.add_argument("--methods", nargs="+", default=None, help="비교할 방식 (기본: METHODS 전체)")
     ap.add_argument("--scenarios", nargs="+", default=["load070", "load085", "load100"])
     args = ap.parse_args()
     exp = Path(args.exp_dir)
@@ -52,12 +55,14 @@ def main():
     for sdir in sorted((exp / "runs").iterdir()):
         if not any(sdir.name.startswith(p) for p in args.scenarios):
             continue
-        data = exp / "data" / sdir.name
+        data = (Path(args.data_dir) if args.data_dir else exp / "data") / sdir.name
         ctx = pd.read_csv(data / "energy_context.csv")
         machines = pd.read_csv(data / "machines.csv")
         n = len(ctx)
         profiles = {}
         for name, f in METHODS.items():
+            if args.methods and name not in args.methods and name != "EDD":
+                continue
             if (sdir / f).exists():
                 profiles[name] = line_profile(pd.read_csv(sdir / f), machines, ctx)
         for mon in mondays:

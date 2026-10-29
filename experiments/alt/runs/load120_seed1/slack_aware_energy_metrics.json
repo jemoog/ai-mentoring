@@ -1,0 +1,23 @@
+{
+  "scheduled_operations": 240,
+  "scheduled_jobs": 80,
+  "on_time_jobs": 24,
+  "tardy_jobs": 56,
+  "due_date_adherence_rate": 0.3,
+  "total_tardiness_min": 47655.0,
+  "avg_tardiness_min": 595.69,
+  "makespan_start": "2026-09-21 06:00:00",
+  "makespan_end": "2026-09-29 12:15:00",
+  "total_setup_time_min": 1785,
+  "total_energy_kWh_est": 59880.05,
+  "total_energy_cost_est": 8459658.0,
+  "total_peak_overlap_slots": 715,
+  "total_co2_kg_est": 32908.03,
+  "policy_mode_counts": {
+    "normal_energy": 91,
+    "late_risk_fast": 63,
+    "limited_energy": 39,
+    "active_peak_avoid": 31,
+    "urgent_fast": 16
+  }
+}

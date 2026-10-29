@@ -89,7 +89,8 @@ def build_edd_schedule(job_orders, machines, routing, maint, sort_cols=None):
     jobs = job_orders.sort_values(sort_cols).reset_index(drop=True)
     for _, job in jobs.iterrows():
         current_ready = job.release_time
-        product_routes = routing[routing.product_type == job.product_type].sort_values('process_step')
+        # 대체 설비가 있으면 같은 공정 단계가 여러 행 → 단계별로 한 번만 처리 (설비 선택은 아래 eligible에서)
+        product_routes = routing[routing.product_type == job.product_type].sort_values('process_step').drop_duplicates('process_step')
         for _, route in product_routes.iterrows():
             candidates = []
             eligible = routing[(routing.product_type == job.product_type) & (routing.process_step == route.process_step)]
